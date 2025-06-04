@@ -3,8 +3,8 @@
 #include <WiFiClientSecure.h>
 
 // WiFi credentials
-const char* ssid = "samsung50";
-const char* password = "abcd1234";
+const char* ssid = "AndroidAP";
+const char* password = "12345678";
 
 // HiveMQ Cloud settings
 const char* mqtt_server = "6da50eee270d490d86688a1ad70aa6dc.s1.eu.hivemq.cloud";
@@ -18,8 +18,8 @@ const char* device_id = "1122334455";
 const char* device_name = "green";
 
 // Pin configuration
-const int ledPin = 15;       // LED pin
-const int sensorPin = 16;     // Analog input pin
+const int ledPin = RGB_BUILTIN;       // LED pin
+const int sensorPin = 4;     // Analog input pin
 
 WiFiClientSecure espClient;
 PubSubClient client(espClient);
