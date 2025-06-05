@@ -1,0 +1,25 @@
+.app-header {
+  background-color: #282c34;
+  color: white;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.app-header nav button {
+  background: none;
+  border: none;
+  color: white;
+  margin-left: 15px;
+  cursor: pointer;
+}
+
+.app-header nav button:hover {
+  text-decoration: underline;
+}

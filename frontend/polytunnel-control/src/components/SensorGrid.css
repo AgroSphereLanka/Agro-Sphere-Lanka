@@ -1,0 +1,66 @@
+/* src/components/SensorGrid.css */
+.sensor-grid .section-title {
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+  color: var(--primary);
+}
+
+.sensors-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.2rem;
+}
+
+.sensor-card {
+  display: flex;
+  padding: 1.2rem;
+  border-radius: 8px;
+  background: #f9f9f9;
+  transition: all 0.3s ease;
+}
+
+.sensor-card.high, .sensor-card.low, .sensor-card.danger {
+  border-left: 4px solid var(--warning);
+}
+
+.sensor-card.danger {
+  border-left-color: var(--danger);
+  background: #ffebee;
+}
+
+.sensor-card .sensor-icon {
+  font-size: 2rem;
+  color: var(--primary);
+  margin-right: 1rem;
+  align-self: center;
+}
+
+.sensor-card.danger .sensor-icon {
+  color: var(--danger);
+}
+
+.sensor-info {
+  flex: 1;
+}
+
+.sensor-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.3rem;
+  color: var(--text);
+}
+
+.sensor-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.sensor-card.danger .sensor-value {
+  color: var(--danger);
+}
+
+.sensor-range, .sensor-status {
+  font-size: 0.85rem;
+  color: var(--text-light);
+}

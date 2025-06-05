@@ -1,0 +1,119 @@
+/* src/components/WaterTankMonitor.css */
+.tanks-container {
+  display: flex;
+  justify-content: space-around;
+  margin: 1.5rem 0;
+  gap: 1.5rem;
+}
+
+.tank-card {
+  flex: 1;
+  text-align: center;
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.2rem;
+}
+
+.tank-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tank-icon {
+  font-size: 1.5rem;
+  color: var(--secondary);
+}
+
+.tank-gauge {
+  height: 200px;
+  width: 80px;
+  border: 1px solid #e0e0e0;
+  margin: 0 auto;
+  position: relative;
+  background: #f0f0f0;
+  border-radius: 40px;
+  overflow: hidden;
+}
+
+.water-level {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  transition: height 0.5s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  background: linear-gradient(to top, #2196F3, #64b5f6);
+}
+
+.level-percent {
+  position: absolute;
+  bottom: 5px;
+  font-size: 0.9rem;
+}
+
+.water-level.low {
+  background: linear-gradient(to top, #ff9800, #ffb74d);
+}
+
+.water-level.medium {
+  background: linear-gradient(to top, #4CAF50, #81c784);
+}
+
+.water-level.high {
+  background: linear-gradient(to top, #f44336, #e57373);
+}
+
+.tank-status {
+  margin-top: 1rem;
+  padding: 0.3rem 0;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.tank-status.low {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.tank-status.medium {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.tank-status.high {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.alert-banner {
+  padding: 0.8rem 1.2rem;
+  border-radius: 6px;
+  margin-top: 1rem;
+  animation: pulse 2s infinite;
+}
+
+.alert-banner.warning {
+  background: #fff8e1;
+  border-left: 4px solid #ffa000;
+}
+
+.alert-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.alert-content strong {
+  color: #ffa000;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.9; }
+  50% { opacity: 1; }
+  100% { opacity: 0.9; }
+}
