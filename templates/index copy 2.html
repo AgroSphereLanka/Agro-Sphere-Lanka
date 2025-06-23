@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">Your Greenhouses</h2>
+    </div>
+</div>
+
+<div class="row" id="devices-container">
+    {% for device in devices %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card device-card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>{{ device.device_name }}</span>
+                <span class="badge bg-secondary">{{ device.device_id }}</span>
+            </div>
+            <div class="card-body">
+                <!-- Main Tank Level Section -->
+                <div class="mb-4">
+                    <h5 class="card-title">Main Tank Level</h5>
+                    <div class="tank-container position-relative" style="height: 150px; border: 2px solid #ccc; border-radius: 5px;">
+                        <div class="water-level position-absolute bottom-0 w-100" 
+                             id="water-level-{{ device.device_id }}"
+                             style="background-color: #3498db; transition: height 0.5s;">
+                        </div>
+                        <div class="tank-percentage position-absolute w-100 text-center" 
+                             id="tank-percentage-{{ device.device_id }}"
+                             style="top: 50%; transform: translateY(-50%); color: #333; font-weight: bold;">
+                        </div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <span id="tank-status-{{ device.device_id }}">Loading...</span>
+                    </div>
+                </div>
+
+                <!-- Secondary Tank Level Section -->
+                <div class="mb-4">
+                    <h5 class="card-title">Secondary Tank Level</h5>
+                    <div class="tank-container position-relative" style="height: 150px; border: 2px solid #ccc; border-radius: 5px;">
+                        <div class="water-level position-absolute bottom-0 w-100" 
+                             id="secondary-water-level-{{ device.device_id }}"
+                             style="background-color: #2ecc71; transition: height 0.5s;">
+                        </div>
+                        <div class="tank-percentage position-absolute w-100 text-center" 
+                             id="secondary-tank-percentage-{{ device.device_id }}"
+                             style="top: 50%; transform: translateY(-50%); color: #333; font-weight: bold;">
+                        </div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <span id="secondary-tank-status-{{ device.device_id }}">Loading...</span>
+                    </div>
+                </div>
+                
+                <!-- LED Control Section -->
+                <div class="mb-4">
+                    <h5 class="card-title">LED Control</h5>
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-success" 
+                                onclick="controlLED('{{ device.device_id }}', true)">
+                            <i class="bi bi-power"></i> Turn ON
+                        </button>
+                        <button type="button" class="btn btn-danger" 
+                                onclick="controlLED('{{ device.device_id }}', false)">
+                            <i class="bi bi-power-off"></i> Turn OFF
+                        </button>
+                    </div>
+                    <div class="mt-2">
+                        Status: 
+                        <span class="led-indicator {% if device.led_state %}led-on{% else %}led-off{% endif %}" 
+                              id="led-indicator-{{ device.device_id }}"></span>
+                        <span id="led-status-{{ device.device_id }}">
+                            {{ 'ON' if device.led_state else 'OFF' }}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Chart Section -->
+                <div>
+                    <h5 class="card-title">Tank Level History</h5>
+                    <div class="chart-container">
+                        <canvas id="chart-{{ device.device_id }}"></canvas>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary w-100 mt-2" 
+                            onclick="loadHistory('{{ device.device_id }}')">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh History
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            You don't have any devices yet. Add your first device to get started!
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Add Device Button -->
+{% if 'user_id' in session %}
+<button class="btn btn-primary add-device-btn" data-bs-toggle="modal" data-bs-target="#addDeviceModal">
+    <i class="bi bi-plus-lg"></i>
+</button>
+{% endif %}
+
+<!-- Add Device Modal -->
+<div class="modal fade" id="addDeviceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Device</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addDeviceForm">
+                    <div class="mb-3">
+                        <label for="deviceId" class="form-label">Device ID</label>
+                        <input type="text" class="form-control" id="deviceId" name="device_id" required>
+                        <div class="form-text">Unique identifier for your device</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="deviceName" class="form-label">Device Name</label>
+                        <input type="text" class="form-control" id="deviceName" name="device_name" required>
+                        <div class="form-text">Friendly name for your device</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="addDevice()">Add Device</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Socket.IO
+    const socket = io();
+    
+    // Store chart instances
+    const charts = {};
+    
+    // Handle main tank level updates
+    socket.on('tank_level_update', function(data) {
+        const waterLevel = document.getElementById(`water-level-${data.device_id}`);
+        const tankPercentage = document.getElementById(`tank-percentage-${data.device_id}`);
+        const tankStatus = document.getElementById(`tank-status-${data.device_id}`);
+        
+        if (waterLevel && tankPercentage && tankStatus) {
+            const percentage = (parseFloat(data.level) / 100);
+            waterLevel.style.height = `${percentage * 100}%`;
+            tankPercentage.textContent = `${Math.round(percentage * 100)}%`;
+            
+            // Update status text and color
+            if (percentage > 0.8) {
+                waterLevel.style.backgroundColor = '#2ecc71'; // Green
+                tankStatus.textContent = 'Main Tank: Good';
+            } else if (percentage > 0.3) {
+                waterLevel.style.backgroundColor = '#f1c40f'; // Yellow
+                tankStatus.textContent = 'Main Tank: Moderate';
+            } else {
+                waterLevel.style.backgroundColor = '#e74c3c'; // Red
+                tankStatus.textContent = 'Main Tank: Low - Please Refill';
+            }
+        }
+    });
+
+    // Handle secondary tank level updates
+    socket.on('secondary_tank_level_update', function(data) {
+        const waterLevel = document.getElementById(`secondary-water-level-${data.device_id}`);
+        const tankPercentage = document.getElementById(`secondary-tank-percentage-${data.device_id}`);
+        const tankStatus = document.getElementById(`secondary-tank-status-${data.device_id}`);
+        
+        if (waterLevel && tankPercentage && tankStatus) {
+            const percentage = (parseFloat(data.level) / 100);
+            waterLevel.style.height = `${percentage * 100}%`;
+            tankPercentage.textContent = `${Math.round(percentage * 100)}%`;
+            
+            // Update status text and color
+            if (percentage > 0.8) {
+                waterLevel.style.backgroundColor = '#2ecc71'; // Green
+                tankStatus.textContent = 'Secondary Tank: Good';
+            } else if (percentage > 0.3) {
+                waterLevel.style.backgroundColor = '#f1c40f'; // Yellow
+                tankStatus.textContent = 'Secondary Tank: Moderate';
+            } else {
+                waterLevel.style.backgroundColor = '#e74c3c'; // Red
+                tankStatus.textContent = 'Secondary Tank: Low - Please Refill';
+            }
+        }
+    });
+    
+    // Handle LED status updates
+    socket.on('led_status_update', function(data) {
+        const indicator = document.getElementById(`led-indicator-${data.device_id}`);
+        const status = document.getElementById(`led-status-${data.device_id}`);
+        
+        if (indicator && status) {
+            if (data.status) {
+                indicator.classList.add('led-on');
+                indicator.classList.remove('led-off');
+                status.textContent = 'ON';
+            } else {
+                indicator.classList.add('led-off');
+                indicator.classList.remove('led-on');
+                status.textContent = 'OFF';
+            }
+        }
+    });
+    
+    // Control LED function
+    function controlLED(device_id, state) {
+        fetch('/control_led', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({device_id, state})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status !== 'success') {
+                alert('Error controlling LED');
+            }
+        });
+    }
+    
+    // Add new device
+    function addDevice() {
+        const form = document.getElementById('addDeviceForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        
+        fetch('/add_device', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: new URLSearchParams(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload(); // Refresh to show new device
+            } else {
+                alert('Error adding device: ' + data.message);
+            }
+        });
+    }
+    
+    // Load tank history and create chart
+    function loadHistory(device_id) {
+        fetch(`/get_tank_history/${device_id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                createChart(device_id, data.readings);
+            }
+        });
+    }
+    
+    // Create chart for a device
+    function createChart(device_id, readings) {
+        const ctx = document.getElementById(`chart-${device_id}`);
+        
+        // Prepare data
+        const labels = readings.map(r => new Date(r.recorded_at).toLocaleTimeString());
+        const mainTankValues = readings.map(r => r.main_level);
+        const secondaryTankValues = readings.map(r => r.secondary_level);
+        
+        // Destroy existing chart if it exists
+        if (charts[device_id]) {
+            charts[device_id].destroy();
+        }
+        
+        // Create new chart
+        charts[device_id] = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Main Tank',
+                        data: mainTankValues,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    },
+                    {
+                        label: 'Secondary Tank',
+                        data: secondaryTankValues,
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Tank Level (%)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Initialize charts and tank levels for all devices on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        {% for device in devices %}
+            loadHistory('{{ device.device_id }}');
+            // Initialize tank levels
+            const waterLevel = document.getElementById(`water-level-{{ device.device_id }}`);
+            const secondaryWaterLevel = document.getElementById(`secondary-water-level-{{ device.device_id }}`);
+            if (waterLevel) waterLevel.style.height = '0%';
+            if (secondaryWaterLevel) secondaryWaterLevel.style.height = '0%';
+        {% endfor %}
+    });
+</script>
+{% endblock %}

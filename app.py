@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_socketio import SocketIO, emit
+from flask_cors import CORS
 import paho.mqtt.client as mqtt
 import mysql.connector
 from mysql.connector import Error
@@ -13,8 +14,9 @@ import ssl
 eventlet.monkey_patch()
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True)
 app.secret_key = os.urandom(24)
-socketio = SocketIO(app, async_mode='eventlet')
+socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins="*")
 
 # Database Configuration - UPDATE THESE WITH YOUR CREDENTIALS
 db_config = {
@@ -48,8 +50,10 @@ HIVEMQ_PORT = 8883
 HIVEMQ_USER = "AgroSphere"
 HIVEMQ_PASS = "AgroSpherex3421"
 
-# Track last sensor values
+# Track last sensor values and tank levels
 last_sensor_values = {}
+last_tank_levels = {}
+last_secondary_tank_levels = {}
 
 def get_db_connection():
     try:
@@ -95,16 +99,8 @@ def get_user_devices(user_id):
         cursor.execute("SELECT id, device_id, device_name FROM devices WHERE user_id = %s", (user_id,))
         devices = cursor.fetchall()
         
-        # Get latest sensor reading for each device
+        # Get latest readings for each device
         for device in devices:
-            cursor.execute("""
-                SELECT value FROM sensor_readings 
-                WHERE device_id = %s 
-                ORDER BY recorded_at DESC LIMIT 1
-            """, (device['device_id'],))
-            reading = cursor.fetchone()
-            device['last_value'] = reading['value'] if reading else 0
-            
             # Get latest LED state
             cursor.execute("""
                 SELECT new_state FROM led_changes 
@@ -113,6 +109,24 @@ def get_user_devices(user_id):
             """, (device['device_id'],))
             led_state = cursor.fetchone()
             device['led_state'] = led_state['new_state'] if led_state else False
+            
+            # Get latest main tank level
+            cursor.execute("""
+                SELECT level FROM tank_levels 
+                WHERE device_id = %s 
+                ORDER BY recorded_at DESC LIMIT 1
+            """, (device['device_id'],))
+            tank_level = cursor.fetchone()
+            device['tank_level'] = tank_level['level'] if tank_level else 0
+            
+            # Get latest secondary tank level
+            cursor.execute("""
+                SELECT level FROM secondary_tank_levels 
+                WHERE device_id = %s 
+                ORDER BY recorded_at DESC LIMIT 1
+            """, (device['device_id'],))
+            secondary_tank_level = cursor.fetchone()
+            device['secondary_tank_level'] = secondary_tank_level['level'] if secondary_tank_level else 0
         
         return devices
     except Error as e:
@@ -164,18 +178,67 @@ def record_led_change(device_id, new_state):
         if conn.is_connected():
             conn.close()
 
+def record_tank_level(device_id, level):
+    """Record tank level if it changed significantly"""
+    threshold = 2.0  # 2% change threshold
+    last_level = last_tank_levels.get(device_id)
+    
+    if last_level is None or abs(level - last_level) >= threshold:
+        conn = get_db_connection()
+        if not conn:
+            return
+        
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO tank_levels (device_id, level)
+                VALUES (%s, %s)
+            """, (device_id, float(level)))
+            conn.commit()
+            last_tank_levels[device_id] = level
+        except Error as e:
+            print(f"Tank Level Recording Error: {e}")
+        finally:
+            if conn.is_connected():
+                conn.close()
+
+def record_secondary_tank_level(device_id, level):
+    """Record secondary tank level if it changed significantly"""
+    threshold = 2.0  # 2% change threshold
+    last_level = last_secondary_tank_levels.get(device_id)
+    
+    if last_level is None or abs(level - last_level) >= threshold:
+        conn = get_db_connection()
+        if not conn:
+            return
+        
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO secondary_tank_levels (device_id, level)
+                VALUES (%s, %s)
+            """, (device_id, float(level)))
+            conn.commit()
+            last_secondary_tank_levels[device_id] = level
+        except Error as e:
+            print(f"Secondary Tank Level Recording Error: {e}")
+        finally:
+            if conn.is_connected():
+                conn.close()
+
 # MQTT Setup
 try:
     mqtt_client = mqtt.Client(protocol=mqtt.MQTTv311)
     mqtt_client.username_pw_set(HIVEMQ_USER, HIVEMQ_PASS)
-    mqtt_client.tls_set(cert_reqs=ssl.CERT_NONE)  # Disable cert verification for testing
-    mqtt_client.tls_insecure_set(True)  # Allow insecure TLS for testing
+    mqtt_client.tls_set(cert_reqs=ssl.CERT_NONE)
+    mqtt_client.tls_insecure_set(True)
     
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
             print("MQTT Connected!")
-            client.subscribe("greenhouse/+/+/sensor")
             client.subscribe("greenhouse/+/+/led/status")
+            client.subscribe("greenhouse/+/+/tank/level")
+            client.subscribe("greenhouse/+/+/secondary-tank/level")
         else:
             print(f"MQTT Connection Failed: {rc}")
     
@@ -191,21 +254,30 @@ try:
             
             payload = msg.payload.decode()
             
-            if msg_type == "sensor":
-                value = float(payload)
-                record_sensor_reading(device_id, value)
-                socketio.emit('sensor_update', {
-                    'device_id': device_id,
-                    'value': value,
-                    'timestamp': datetime.now().isoformat()
-                }, room=username)
-                
-            elif msg_type == "led" and topic_parts[4] == "status":
+            if msg_type == "led" and topic_parts[4] == "status":
                 new_state = payload == "ON"
                 record_led_change(device_id, new_state)
                 socketio.emit('led_status_update', {
                     'device_id': device_id,
                     'status': new_state,
+                    'timestamp': datetime.now().isoformat()
+                }, room=username)
+                
+            elif msg_type == "tank" and topic_parts[4] == "level":
+                level = float(payload)
+                record_tank_level(device_id, level)
+                socketio.emit('tank_level_update', {
+                    'device_id': device_id,
+                    'level': level,
+                    'timestamp': datetime.now().isoformat()
+                }, room=username)
+                
+            elif msg_type == "secondary-tank" and topic_parts[4] == "level":
+                level = float(payload)
+                record_secondary_tank_level(device_id, level)
+                socketio.emit('secondary_tank_level_update', {
+                    'device_id': device_id,
+                    'level': level,
                     'timestamp': datetime.now().isoformat()
                 }, room=username)
                 
@@ -233,10 +305,18 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '').strip()
+        # Handle both form data and JSON requests
+        if request.is_json:
+            data = request.get_json()
+            username = data.get('username', '').strip()
+            password = data.get('password', '').strip()
+        else:
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '').strip()
         
         if not username or not password:
+            if request.is_json:
+                return jsonify({'message': 'Please enter both username and password'}), 400
             flash('Please enter both username and password', 'danger')
             return redirect(url_for('login'))
         
@@ -244,25 +324,40 @@ def login():
         if user_id:
             session['user_id'] = user_id
             session['username'] = username
+            if request.is_json:
+                return jsonify({'message': 'Login successful!'}), 200
             flash('Login successful!', 'success')
             return redirect(url_for('index'))
         else:
+            if request.is_json:
+                return jsonify({'message': 'Invalid username or password'}), 401
             flash('Invalid username or password', 'danger')
+            return redirect(url_for('login'))
     
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '').strip()
+        # Handle both form data and JSON requests
+        if request.is_json:
+            data = request.get_json()
+            username = data.get('username', '').strip()
+            password = data.get('password', '').strip()
+        else:
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '').strip()
         
         if len(username) < 4 or len(password) < 6:
+            if request.is_json:
+                return jsonify({'message': 'Username (4+ chars) and password (6+ chars) required'}), 400
             flash('Username (4+ chars) and password (6+ chars) required', 'danger')
             return redirect(url_for('register'))
         
         conn = get_db_connection()
         if not conn:
+            if request.is_json:
+                return jsonify({'message': 'Database error. Try again later.'}), 500
             flash('Database error. Try again later.', 'danger')
             return redirect(url_for('register'))
         
@@ -270,6 +365,8 @@ def register():
             cursor = conn.cursor()
             cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
             if cursor.fetchone():
+                if request.is_json:
+                    return jsonify({'message': 'Username already exists'}), 400
                 flash('Username already exists', 'danger')
                 return redirect(url_for('register'))
             
@@ -278,9 +375,14 @@ def register():
                 (username, hash_password(password))
             )
             conn.commit()
+            
+            if request.is_json:
+                return jsonify({'message': 'Registration successful! Please login.'}), 201
             flash('Registration successful! Please login.', 'success')
             return redirect(url_for('login'))
         except Error as e:
+            if request.is_json:
+                return jsonify({'message': 'Registration failed. Please try again.'}), 500
             flash('Registration failed. Please try again.', 'danger')
             print(f"Registration Error: {e}")
         finally:
@@ -382,6 +484,65 @@ def get_sensor_history(device_id):
                 'value': row['value'],
                 'recorded_at': row['recorded_at'].isoformat() if row['recorded_at'] else None
             })
+        
+        return jsonify({'status': 'success', 'readings': readings})
+    except Error as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn.is_connected():
+            conn.close()
+
+@app.route('/get_tank_history/<device_id>')
+def get_tank_history(device_id):
+    if 'user_id' not in session:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+    
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'status': 'error', 'message': 'Database error'}), 500
+    
+    try:
+        cursor = conn.cursor(dictionary=True)
+        
+        # Get main tank readings
+        cursor.execute("""
+            SELECT level as main_level, recorded_at 
+            FROM tank_levels 
+            WHERE device_id = %s 
+            ORDER BY recorded_at DESC 
+            LIMIT 100
+        """, (device_id,))
+        main_readings = cursor.fetchall()
+        
+        # Get secondary tank readings
+        cursor.execute("""
+            SELECT level as secondary_level, recorded_at 
+            FROM secondary_tank_levels 
+            WHERE device_id = %s 
+            ORDER BY recorded_at DESC 
+            LIMIT 100
+        """, (device_id,))
+        secondary_readings = cursor.fetchall()
+        
+        # Combine readings
+        readings = []
+        for i in range(max(len(main_readings), len(secondary_readings))):
+            reading = {
+                'recorded_at': None,
+                'main_level': 0,
+                'secondary_level': 0
+            }
+            
+            if i < len(main_readings):
+                reading['recorded_at'] = main_readings[i]['recorded_at']
+                reading['main_level'] = main_readings[i]['main_level']
+            
+            if i < len(secondary_readings):
+                if not reading['recorded_at']:
+                    reading['recorded_at'] = secondary_readings[i]['recorded_at']
+                reading['secondary_level'] = secondary_readings[i]['secondary_level']
+            
+            readings.append(reading)
         
         return jsonify({'status': 'success', 'readings': readings})
     except Error as e:

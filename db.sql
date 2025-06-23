@@ -33,3 +33,19 @@ CREATE TABLE led_changes (
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX (device_id, changed_at)
 );
+
+CREATE TABLE tank_levels (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    device_id VARCHAR(50) NOT NULL,
+    level FLOAT NOT NULL,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX (device_id, recorded_at)
+);
+
+CREATE TABLE secondary_tank_levels (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    device_id VARCHAR(50) NOT NULL,
+    level FLOAT NOT NULL,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX (device_id, recorded_at)
+);

@@ -3,75 +3,396 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h2 class="mb-4">Your Greenhouses</h2>
-    </div>
-</div>
+<style>
+    :root {
+        --primary-blue: #3498db;
+        --primary-green: #2ecc71;
+        --primary-orange: #2229e6;
+        --primary-red: #e74c3c;
+        --primary-purple: #9b59b6;
+        --dark-blue: #2980b9;
+        --dark-green: #27ae60;
+        --light-gray: #ecf0f1;
+        --medium-gray: #bdc3c7;
+        --dark-gray: #7f8c8d;
+    }
+    
+    body {
+        background-color: #f5f7fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .card.device-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+        background: white;
+    }
+    
+    .card.device-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+        color: white;
+        font-weight: 600;
+        border-radius: 15px 15px 0 0 !important;
+        padding: 15px 20px;
+        border-bottom: none;
+    }
+    
+    .card-header .badge {
+        background-color: rgba(255,255,255,0.2);
+        font-size: 0.75rem;
+        padding: 5px 10px;
+    }
+    
+    .card-title {
+        color: var(--dark-gray);
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .card-title i {
+        margin-right: 8px;
+        font-size: 1.1rem;
+    }
+    
+    .tank-container {
+        height: 200px;
+        border-radius: 10px;
+        background-color: #f8f9fa;
+        position: relative;
+        overflow: hidden;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        border: 2px solid #dee2e6 !important;
+    }
+    
+    .water-level {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        transition: height 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55), background-color 0.5s ease;
+        border-radius: 0 0 8px 8px;
+    }
+    
+    .tank-percentage {
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: rgba(0,0,0,0.7);
+        text-shadow: 0 0 5px rgba(255,255,255,0.8);
+        z-index: 2;
+    }
+    
+    .tank-status {
+        font-size: 0.9rem;
+        font-weight: 500;
+        padding: 5px 10px;
+        border-radius: 20px;
+        display: inline-block;
+    }
+    
+    .status-good {
+        background-color: rgba(46, 204, 113, 0.2);
+        color: var(--dark-green);
+    }
+    
+    .status-moderate {
+        background-color: rgba(241, 196, 15, 0.2);
+        color: #c27d0e;
+    }
+    
+    .status-low {
+        background-color: rgba(231, 76, 60, 0.2);
+        color: var(--primary-red);
+    }
+    
+    .led-control-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .btn-led {
+        flex: 1;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-led-on {
+        background-color: var(--primary-green);
+        border-color: var(--primary-green);
+    }
+    
+    .btn-led-on:hover {
+        background-color: var(--dark-green);
+        border-color: var(--dark-green);
+    }
+    
+    .btn-led-off {
+        background-color: var(--primary-red);
+        border-color: var(--primary-red);
+    }
+    
+    .btn-led-off:hover {
+        background-color: #c0392b;
+        border-color: #c0392b;
+    }
+    
+    .led-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+    
+    .led-on {
+        background-color: var(--primary-green);
+        box-shadow: 0 0 10px var(--primary-green);
+    }
+    
+    .led-off {
+        background-color: var(--primary-red);
+        box-shadow: 0 0 10px var(--primary-red);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 200px;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .add-device-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+    
+    .add-device-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    
+    .tank-label {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: rgba(0,0,0,0.6);
+        z-index: 2;
+    }
+    
+    .tank-waves {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 200%;
+        height: 100%;
+        background: url("data:image/svg+xml,%3Csvg viewBox='0 0 1200 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z' opacity='.25' fill='%23000'/%3E%3Cpath d='M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z' opacity='.5' fill='%23000'/%3E%3Cpath d='M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z' fill='%23000'/%3E%3C/svg%3E") repeat-x;
+        background-size: 50% 100%;
+        animation: wave 10s linear infinite;
+        opacity: 0.1;
+        z-index: 1;
+    }
+    
+    @keyframes wave {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+    
+    .device-card .card-body {
+        padding: 20px;
+    }
+    
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+        border-bottom: none;
+    }
+    
+    .modal-title {
+        font-weight: 600;
+    }
+    
+    .btn-close {
+        filter: invert(1);
+    }
+    
+    h2 {
+        color: #2c3e50;
+        font-weight: 700;
+        position: relative;
+        padding-bottom: 10px;
+    }
+    
+    h2:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(to right, var(--primary-blue), var(--primary-green));
+        border-radius: 2px;
+    }
+    
+    .alert-info {
+        background-color: rgba(52, 152, 219, 0.1);
+        border-color: rgba(52, 152, 219, 0.3);
+        color: #2c3e50;
+        border-radius: 10px;
+    }
+</style>
 
-<div class="row" id="devices-container">
-    {% for device in devices %}
-    <div class="col-md-6 col-lg-4">
-        <div class="card device-card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>{{ device.device_name }}</span>
-                <span class="badge bg-secondary">{{ device.device_id }}</span>
-            </div>
-            <div class="card-body">
-                <div class="mb-4">
-                    <h5 class="card-title">Sensor Reading</h5>
-                    <div class="sensor-value text-center my-3" id="sensor-{{ device.device_id }}">
-                        {{ "%.2f"|format(device.last_value) if device.last_value is not none else "N/A" }}
-                    </div>
-                    <div class="progress">
-                        <div class="progress-bar" role="progressbar" 
-                   
-                             id="progress-{{ device.device_id }}"></div>
-                    </div>
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="bi bi-tree-fill me-2" style="color: var(--primary-green);"></i>
+                Your Greenhouses
+            </h2>
+        </div>
+    </div>
+
+    <div class="row" id="devices-container" data-devices='{{ devices|tojson|safe }}'>
+        {% for device in devices %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card device-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="bi bi-tree me-2"></i>
+                        {{ device.device_name }}
+                    </span>
+                    <span class="badge">
+                        <i class="bi bi-cpu me-1"></i>
+                        {{ device.device_id }}
+                    </span>
                 </div>
-                
-                <div class="mb-4">
-                    <h5 class="card-title">LED Control</h5>
-                    <div class="btn-group w-100" role="group">
-                        <button type="button" class="btn btn-success" 
-                                onclick="controlLED('{{ device.device_id }}', true)">
-                            <i class="bi bi-power"></i> Turn ON
+                <div class="card-body">
+                    <!-- Main Tank Level Section -->
+                    <div class="mb-4">
+                        <h5 class="card-title">
+                            <i class="bi bi-droplet-fill" style="color: var(--primary-blue);"></i>
+                            Main Tank Level
+                        </h5>
+                        <div class="tank-container position-relative">
+                            <div class="tank-label">MAIN TANK</div>
+                            <div class="water-level position-absolute bottom-0 w-100" 
+                                 id="water-level-{{ device.device_id }}"
+                                 style="background: linear-gradient(to top, var(--primary-blue), var(--dark-blue));">
+                                <div class="tank-waves"></div>
+                            </div>
+                            <div class="tank-percentage" id="tank-percentage-{{ device.device_id }}">0%</div>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <span class="tank-status" id="tank-status-{{ device.device_id }}">Loading...</span>
+                        </div>
+                    </div>
+
+                    <!-- Secondary Tank Level Section -->
+                    <div class="mb-4">
+                        <h5 class="card-title">
+                            <i class="bi bi-droplet-half" style="color: var(--primary-green);"></i>
+                            Secondary Tank Level
+                        </h5>
+                        <div class="tank-container position-relative">
+                            <div class="tank-label">SECONDARY TANK</div>
+                            <div class="water-level position-absolute bottom-0 w-100" 
+                                 id="secondary-water-level-{{ device.device_id }}"
+                                 style="background: linear-gradient(to top, var(--primary-green), var(--dark-green));">
+                                <div class="tank-waves"></div>
+                            </div>
+                            <div class="tank-percentage" id="secondary-tank-percentage-{{ device.device_id }}">0%</div>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <span class="tank-status" id="secondary-tank-status-{{ device.device_id }}">Loading...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- LED Control Section -->
+                    <div class="led-control-section">
+                        <h5 class="card-title">
+                            <i class="bi bi-lightbulb-fill" style="color: var(--primary-orange);"></i>
+                            LED Control
+                        </h5>
+                        <div class="btn-group w-100 shadow-sm" role="group">
+                            <button type="button" class="btn btn-led btn-led-on" 
+                                    onclick="controlLED('{{ device.device_id }}', true)">
+                                <i class="bi bi-power me-1"></i> Turn ON
+                            </button>
+                            <button type="button" class="btn btn-led btn-led-off" 
+                                    onclick="controlLED('{{ device.device_id }}', false)">
+                                <i class="bi bi-power-off me-1"></i> Turn OFF
+                            </button>
+                        </div>
+                        <div class="mt-3 text-center">
+                            <span class="me-2">Status:</span>
+                            <span class="led-indicator {% if device.led_state %}led-on{% else %}led-off{% endif %}" 
+                                  id="led-indicator-{{ device.device_id }}"></span>
+                            <span id="led-status-{{ device.device_id }}" class="fw-bold">
+                                {{ 'ON' if device.led_state else 'OFF' }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart Section -->
+                    <div class="mt-4">
+                        <h5 class="card-title">
+                            <i class="bi bi-graph-up" style="color: var(--primary-purple);"></i>
+                            Tank Level History
+                        </h5>
+                        <div class="chart-container">
+                            <canvas id="chart-{{ device.device_id }}"></canvas>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary w-100 mt-2 shadow-sm" 
+                                onclick="loadHistory('{{ device.device_id }}')">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Refresh History
                         </button>
-                        <button type="button" class="btn btn-danger" 
-                                onclick="controlLED('{{ device.device_id }}', false)">
-                            <i class="bi bi-power-off"></i> Turn OFF
-                        </button>
                     </div>
-                    <div class="mt-2">
-                        Status: 
-                        <span class="led-indicator {% if device.led_state %}led-on{% else %}led-off{% endif %}" 
-                              id="led-indicator-{{ device.device_id }}"></span>
-                        <span id="led-status-{{ device.device_id }}">
-                            {{ 'ON' if device.led_state else 'OFF' }}
-                        </span>
-                    </div>
-                </div>
-                
-                <div>
-                    <h5 class="card-title">Sensor History</h5>
-                    <div class="chart-container">
-                        <canvas id="chart-{{ device.device_id }}"></canvas>
-                    </div>
-                    <button class="btn btn-sm btn-outline-primary w-100 mt-2" 
-                            onclick="loadHistory('{{ device.device_id }}')">
-                        <i class="bi bi-arrow-clockwise"></i> Refresh History
-                    </button>
                 </div>
             </div>
         </div>
-    </div>
-    {% else %}
-    <div class="col-12">
-        <div class="alert alert-info">
-            You don't have any devices yet. Add your first device to get started!
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info shadow-sm">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                You don't have any devices yet. Add your first device to get started!
+            </div>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
 
 <!-- Add Device Button -->
@@ -86,7 +407,10 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Add New Device</h5>
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Add New Device
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -105,7 +429,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="addDevice()">Add Device</button>
+                <button type="button" class="btn btn-primary" onclick="addDevice()">
+                    <i class="bi bi-save me-1"></i> Add Device
+                </button>
             </div>
         </div>
     </div>
@@ -118,48 +444,59 @@
     // Store chart instances
     const charts = {};
     
-    // Handle sensor updates
-    socket.on('sensor_update', function(data) {
-        const element = document.getElementById(`sensor-${data.device_id}`);
-        const progress = document.getElementById(`progress-${data.device_id}`);
+    // Handle main tank level updates
+    socket.on('tank_level_update', function(data) {
+        const waterLevel = document.getElementById(`water-level-${data.device_id}`);
+        const tankPercentage = document.getElementById(`tank-percentage-${data.device_id}`);
+        const tankStatus = document.getElementById(`tank-status-${data.device_id}`);
         
-        if (element) {
-            element.textContent = parseFloat(data.value).toFixed(2);
-        }
-        
-        if (progress) {
-            const percentage = (parseFloat(data.value) / 4095 * 100);
-            progress.style.width = `${percentage}%`;
+        if (waterLevel && tankPercentage && tankStatus) {
+            const percentage = (parseFloat(data.level) / 100);
+            waterLevel.style.height = `${percentage * 100}%`;
+            tankPercentage.textContent = `${Math.round(percentage * 100)}%`;
             
-            // Change color based on value
-            if (percentage > 80) {
-                progress.classList.add('bg-danger');
-                progress.classList.remove('bg-warning', 'bg-success');
-            } else if (percentage > 50) {
-                progress.classList.add('bg-warning');
-                progress.classList.remove('bg-danger', 'bg-success');
+            // Update status text and color
+            if (percentage > 0.8) {
+                waterLevel.style.background = 'linear-gradient(to top, var(--primary-blue), var(--dark-blue))';
+                tankStatus.textContent = 'Main Tank: Good';
+                tankStatus.className = 'tank-status status-good';
+            } else if (percentage > 0.3) {
+                waterLevel.style.background = 'linear-gradient(to top,  var(--primary-blue), var(--dark-blue))';
+                tankStatus.textContent = 'Main Tank: Moderate';
+                tankStatus.className = 'tank-status status-moderate';
             } else {
-                progress.classList.add('bg-success');
-                progress.classList.remove('bg-danger', 'bg-warning');
+                waterLevel.style.background = 'linear-gradient(to top,  var(--primary-blue), var(--dark-blue))';
+                tankStatus.textContent = 'Main Tank: Low - Please Refill';
+                tankStatus.className = 'tank-status status-low';
             }
         }
+    });
+
+    // Handle secondary tank level updates
+    socket.on('secondary_tank_level_update', function(data) {
+        const waterLevel = document.getElementById(`secondary-water-level-${data.device_id}`);
+        const tankPercentage = document.getElementById(`secondary-tank-percentage-${data.device_id}`);
+        const tankStatus = document.getElementById(`secondary-tank-status-${data.device_id}`);
         
-        // Update chart if exists
-        if (charts[data.device_id]) {
-            const chart = charts[data.device_id];
-            const now = new Date(data.timestamp);
+        if (waterLevel && tankPercentage && tankStatus) {
+            const percentage = (parseFloat(data.level) / 100);
+            waterLevel.style.height = `${percentage * 100}%`;
+            tankPercentage.textContent = `${Math.round(percentage * 100)}%`;
             
-            // Add new data point
-            chart.data.labels.push(now.toLocaleTimeString());
-            chart.data.datasets[0].data.push(data.value);
-            
-            // Remove oldest point if too many
-            if (chart.data.labels.length > 20) {
-                chart.data.labels.shift();
-                chart.data.datasets[0].data.shift();
+            // Update status text and color
+            if (percentage > 0.8) {
+                waterLevel.style.background = 'linear-gradient(to top, var(--primary-green), var(--dark-green))';
+                tankStatus.textContent = 'Secondary Tank: Good';
+                tankStatus.className = 'tank-status status-good';
+            } else if (percentage > 0.3) {
+                waterLevel.style.background = 'linear-gradient(to top, var(--primary-green), var(--dark-green))';
+                tankStatus.textContent = 'Secondary Tank: Moderate';
+                tankStatus.className = 'tank-status status-moderate';
+            } else {
+                waterLevel.style.background = 'linear-gradient(to top, var(--primary-green), var(--dark-green))';
+                tankStatus.textContent = 'Secondary Tank: Low - Please Refill';
+                tankStatus.className = 'tank-status status-low';
             }
-            
-            chart.update();
         }
     });
     
@@ -173,10 +510,12 @@
                 indicator.classList.add('led-on');
                 indicator.classList.remove('led-off');
                 status.textContent = 'ON';
+                status.style.color = 'var(--primary-green)';
             } else {
                 indicator.classList.add('led-off');
                 indicator.classList.remove('led-on');
                 status.textContent = 'OFF';
+                status.style.color = 'var(--primary-red)';
             }
         }
     });
@@ -191,7 +530,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.status !== 'success') {
-                alert('Error controlling LED');
+                showAlert('Error controlling LED', 'danger');
             }
         });
     }
@@ -202,6 +541,11 @@
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
         
+        if (!data.device_id || !data.device_name) {
+            showAlert('Please fill in all fields', 'warning');
+            return;
+        }
+        
         fetch('/add_device', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -210,31 +554,41 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                location.reload(); // Refresh to show new device
+                $('#addDeviceModal').modal('hide');
+                showAlert('Device added successfully!', 'success');
+                setTimeout(() => location.reload(), 1500); // Refresh to show new device
             } else {
-                alert('Error adding device: ' + data.message);
+                showAlert('Error adding device: ' + data.message, 'danger');
             }
         });
     }
     
-    // Load sensor history and create chart
+    // Load tank history and create chart
     function loadHistory(device_id) {
-        fetch(`/get_sensor_history/${device_id}`)
+        fetch(`/get_tank_history/${device_id}`)
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
                 createChart(device_id, data.readings);
+                showAlert('History data refreshed', 'success');
+            } else {
+                showAlert('Error loading history', 'danger');
             }
+        })
+        .catch(error => {
+            showAlert('Network error loading history', 'danger');
         });
     }
     
     // Create chart for a device
     function createChart(device_id, readings) {
         const ctx = document.getElementById(`chart-${device_id}`);
+        if (!ctx) return; // Skip if chart element doesn't exist
         
         // Prepare data
         const labels = readings.map(r => new Date(r.recorded_at).toLocaleTimeString());
-        const values = readings.map(r => r.value);
+        const mainTankValues = readings.map(r => r.main_level);
+        const secondaryTankValues = readings.map(r => r.secondary_level);
         
         // Destroy existing chart if it exists
         if (charts[device_id]) {
@@ -246,14 +600,32 @@
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: 'Sensor Value',
-                    data: values,
-                    borderColor: '#3498db',
-                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                    tension: 0.1,
-                    fill: true
-                }]
+                datasets: [
+                    {
+                        label: 'Main Tank',
+                        data: mainTankValues,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#3498db',
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Secondary Tank',
+                        data: secondaryTankValues,
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#2ecc71',
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
             },
             options: {
                 responsive: true,
@@ -261,23 +633,114 @@
                 scales: {
                     y: {
                         beginAtZero: true,
-                        max: 4095
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Tank Level (%)',
+                            color: '#7f8c8d'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        },
+                        ticks: {
+                            color: '#7f8c8d'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#7f8c8d',
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
                     }
                 },
                 plugins: {
                     legend: {
-                        display: false
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: '#2c3e50',
+                            font: {
+                                weight: '600'
+                            },
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleFont: {
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            weight: 'normal'
+                        },
+                        padding: 10,
+                        cornerRadius: 10,
+                        usePointStyle: true
                     }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
                 }
             }
         });
     }
     
-    // Initialize charts for all devices on page load
+    // Show alert message
+    function showAlert(message, type) {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alert.style.top = '20px';
+        alert.style.right = '20px';
+        alert.style.zIndex = '1100';
+        alert.style.minWidth = '300px';
+        alert.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
+        alert.style.borderRadius = '10px';
+        alert.role = 'alert';
+        
+        let icon;
+        if (type === 'success') icon = '<i class="bi bi-check-circle-fill me-2"></i>';
+        else if (type === 'danger') icon = '<i class="bi bi-exclamation-triangle-fill me-2"></i>';
+        else if (type === 'warning') icon = '<i class="bi bi-exclamation-circle-fill me-2"></i>';
+        else icon = '<i class="bi bi-info-circle-fill me-2"></i>';
+        
+        alert.innerHTML = `
+            ${icon}
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(alert);
+        
+        // Auto dismiss after 3 seconds
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 3000);
+    }
+    
+    // Initialize charts and tank levels for all devices on page load
     document.addEventListener('DOMContentLoaded', function() {
-        {% for device in devices %}
-            loadHistory('{{ device.device_id }}');
-        {% endfor %}
+        const devicesContainer = document.getElementById('devices-container');
+        const devices = JSON.parse(devicesContainer.dataset.devices || '[]');
+        
+        devices.forEach(device => {
+            // Load history for each device
+            loadHistory(device.device_id);
+            
+            // Initialize tank levels
+            const waterLevel = document.getElementById(`water-level-${device.device_id}`);
+            const secondaryWaterLevel = document.getElementById(`secondary-water-level-${device.device_id}`);
+            
+            if (waterLevel) waterLevel.style.height = '0%';
+            if (secondaryWaterLevel) secondaryWaterLevel.style.height = '0%';
+        });
     });
 </script>
 {% endblock %}
