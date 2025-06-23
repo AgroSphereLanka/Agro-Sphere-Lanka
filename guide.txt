@@ -1,5 +1,6 @@
 pip install flask flask-socketio paho-mqtt mysql-connector-python eventlet cryptography
 /home/procodex/greenhouse/venv
-
+venv/scripts/activate
+python app.py
 
 greenhouse/pasindu/1122334455/led/control
