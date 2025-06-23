@@ -22,15 +22,6 @@
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     
-    .main-container {
-        background-color: white;
-        border-radius: 15px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        padding: 20px;
-        margin: 20px auto;
-        max-width: 95%;
-    }
-    
     .card.device-card {
         border-radius: 15px;
         border: none;
@@ -74,17 +65,6 @@
         font-size: 1.1rem;
     }
     
-    .tanks-container {
-        display: flex;
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-    
-    .tank-wrapper {
-        flex: 1;
-        min-width: 120px;
-    }
-    
     .tank-container {
         height: 200px;
         border-radius: 10px;
@@ -120,7 +100,6 @@
         padding: 5px 10px;
         border-radius: 20px;
         display: inline-block;
-        margin-top: 5px;
     }
     
     .status-good {
@@ -295,404 +274,124 @@
         color: #2c3e50;
         border-radius: 10px;
     }
-    
-    /* Tab styling */
-    .nav-tabs {
-        border-bottom: 2px solid #dee2e6;
-    }
-    
-    .nav-tabs .nav-link {
-        border: none;
-        color: #7f8c8d;
-        font-weight: 600;
-        padding: 10px 15px;
-        border-radius: 0;
-        margin-right: 5px;
-        font-size: 0.85rem;
-    }
-    
-    .nav-tabs .nav-link:hover {
-        border-color: transparent;
-        color: var(--primary-blue);
-    }
-    
-    .nav-tabs .nav-link.active {
-        color: var(--primary-blue);
-        background-color: transparent;
-        border-bottom: 3px solid var(--primary-blue);
-    }
-    
-    .tab-content {
-        padding: 20px 0;
-    }
-    
-    /* Schedule styling */
-    .schedule-day {
-        margin-bottom: 15px;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 15px;
-        background-color: #f8f9fa;
-    }
-    
-    .schedule-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    
-    .schedule-title {
-        font-weight: 600;
-        color: var(--dark-gray);
-    }
-    
-    .schedule-toggle {
-        display: flex;
-        align-items: center;
-    }
-    
-    .schedule-entry {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 10px;
-        flex-wrap: wrap;
-    }
-    
-    .schedule-entry .form-control {
-        flex: 1;
-        min-width: 120px;
-    }
-    
-    .add-schedule-btn {
-        margin-top: 10px;
-    }
-    
-    .fertilizer-select {
-        min-width: 150px;
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .tanks-container {
-            flex-direction: row;
-            overflow-x: auto;
-            padding-bottom: 10px;
-        }
-        
-        .tank-wrapper {
-            min-width: 150px;
-        }
-        
-        .nav-tabs .nav-link {
-            padding: 8px 10px;
-            font-size: 0.8rem;
-        }
-        
-        .schedule-entry {
-            flex-direction: column;
-        }
-        
-        .schedule-entry .form-control {
-            width: 100%;
-        }
-    }
-    
-    @media (min-width: 992px) {
-        .device-card .card-body {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .live-view {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .led-control-section {
-            flex: 1;
-        }
-        
-        /* Wide card layout for desktop */
-        .col-md-6.col-lg-4 {
-            flex: 0 0 100%;
-            max-width: 100%;
-        }
-        
-        .device-card {
-            display: flex;
-            flex-direction: row;
-            min-height: 400px;
-        }
-        
-        .device-card .card-header {
-            border-radius: 15px 0 0 15px !important;
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 50px;
-            padding: 20px 10px;
-        }
-        
-        .device-card .card-body {
-            flex: 1;
-        }
-        
-        .tanks-container {
-            flex-direction: row;
-            height: 100%;
-        }
-        
-        .tank-wrapper {
-            height: 100%;
-        }
-        
-        .tank-container {
-            height: 300px;
-        }
-    }
 </style>
 
-<div class="main-container">
-    <div class="container-fluid py-4">
-        <div class="row">
-            <div class="col-12">
-                <h2 class="mb-4">
-                    <i class="bi bi-tree-fill me-2" style="color: var(--primary-green);"></i>
-                    Your Greenhouses
-                </h2>
-            </div>
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="bi bi-tree-fill me-2" style="color: var(--primary-green);"></i>
+                Your Greenhouses
+            </h2>
         </div>
+    </div>
 
-        <div class="row" id="devices-container" data-devices='{{ devices|tojson|safe }}'>
-            {% for device in devices %}
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card device-card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>
-                            <i class="bi bi-tree me-2"></i>
-                            {{ device.device_name }}
-                        </span>
-                        <span class="badge">
-                            <i class="bi bi-cpu me-1"></i>
-                            {{ device.device_id }}
-                        </span>
-                    </div>
-                    <div class="card-body">
-                        <!-- Tabs -->
-                        <ul class="nav nav-tabs" id="deviceTabs-{{ device.device_id }}" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="live-tab-{{ device.device_id }}" data-bs-toggle="tab" 
-                                        data-bs-target="#live-{{ device.device_id }}" type="button" role="tab" 
-                                        aria-controls="live-{{ device.device_id }}" aria-selected="true">
-                                    <i class="bi bi-speedometer2 me-1"></i> Live
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="history-tab-{{ device.device_id }}" data-bs-toggle="tab" 
-                                        data-bs-target="#history-{{ device.device_id }}" type="button" role="tab" 
-                                        aria-controls="history-{{ device.device_id }}" aria-selected="false">
-                                    <i class="bi bi-clock-history me-1"></i> History
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="schedule-tab-{{ device.device_id }}" data-bs-toggle="tab" 
-                                        data-bs-target="#schedule-{{ device.device_id }}" type="button" role="tab" 
-                                        aria-controls="schedule-{{ device.device_id }}" aria-selected="false">
-                                    <i class="bi bi-calendar-event me-1"></i> Schedule
-                                </button>
-                            </li>
-                        </ul>
-                        
-                        <!-- Tab content -->
-                        <div class="tab-content">
-                            <!-- Live View Tab -->
-                            <div class="tab-pane fade show active live-view" id="live-{{ device.device_id }}" role="tabpanel" 
-                                 aria-labelledby="live-tab-{{ device.device_id }}">
-                                <!-- Tank Levels Section -->
-                                <div class="tanks-container">
-                                    <!-- Main Tank -->
-                                    <div class="tank-wrapper">
-                                        <h5 class="card-title">
-                                            <i class="bi bi-droplet-fill" style="color: var(--primary-blue);"></i>
-                                            Main Tank
-                                        </h5>
-                                        <div class="tank-container position-relative">
-                                            <div class="tank-label"></div>
-                                            <div class="water-level position-absolute bottom-0 w-100" 
-                                                 id="water-level-{{ device.device_id }}"
-                                                 style="background: linear-gradient(to top, var(--primary-blue), var(--dark-blue));">
-                                                <div class="tank-waves"></div>
-                                            </div>
-                                            <div class="tank-percentage" id="tank-percentage-{{ device.device_id }}">0%</div>
-                                        </div>
-                                        <div class="text-center">
-                                            <span class="tank-status" id="tank-status-{{ device.device_id }}">Loading...</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Secondary Tank -->
-                                    <div class="tank-wrapper">
-                                        <h5 class="card-title">
-                                            <i class="bi bi-droplet-half" style="color: var(--primary-green);"></i>
-                                            Secondary Tank
-                                        </h5>
-                                        <div class="tank-container position-relative">
-                                            <div class="tank-label"></div>
-                                            <div class="water-level position-absolute bottom-0 w-100" 
-                                                 id="secondary-water-level-{{ device.device_id }}"
-                                                 style="background: linear-gradient(to top, var(--primary-green), var(--dark-green));">
-                                                <div class="tank-waves"></div>
-                                            </div>
-                                            <div class="tank-percentage" id="secondary-tank-percentage-{{ device.device_id }}">0%</div>
-                                        </div>
-                                        <div class="text-center">
-                                            <span class="tank-status" id="secondary-tank-status-{{ device.device_id }}">Loading...</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- LED Control Section -->
-                                <div class="led-control-section">
-                                    <h5 class="card-title">
-                                        <i class="bi bi-lightbulb-fill" style="color: var(--primary-orange);"></i>
-                                        LED Control
-                                    </h5>
-                                    <div class="btn-group w-100 shadow-sm" role="group">
-                                        <button type="button" class="btn btn-led btn-led-on" 
-                                                onclick="controlLED('{{ device.device_id }}', true)">
-                                            <i class="bi bi-power me-1"></i> Turn ON
-                                        </button>
-                                        <button type="button" class="btn btn-led btn-led-off" 
-                                                onclick="controlLED('{{ device.device_id }}', false)">
-                                            <i class="bi bi-power-off me-1"></i> Turn OFF
-                                        </button>
-                                    </div>
-                                    <div class="mt-3 text-center">
-                                        <span class="me-2">Status:</span>
-                                        <span class="led-indicator {% if device.led_state %}led-on{% else %}led-off{% endif %}" 
-                                              id="led-indicator-{{ device.device_id }}"></span>
-                                        <span id="led-status-{{ device.device_id }}" class="fw-bold">
-                                            {{ 'ON' if device.led_state else 'OFF' }}
-                                        </span>
-                                    </div>
-                                </div>
+    <div class="row" id="devices-container" data-devices='{{ devices|tojson|safe }}'>
+        {% for device in devices %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card device-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="bi bi-tree me-2"></i>
+                        {{ device.device_name }}
+                    </span>
+                    <span class="badge">
+                        <i class="bi bi-cpu me-1"></i>
+                        {{ device.device_id }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <!-- Main Tank Level Section -->
+                    <div class="mb-4">
+                        <h5 class="card-title">
+                            <i class="bi bi-droplet-fill" style="color: var(--primary-blue);"></i>
+                            Main Tank Level
+                        </h5>
+                        <div class="tank-container position-relative">
+                            <div class="tank-label">MAIN TANK</div>
+                            <div class="water-level position-absolute bottom-0 w-100" 
+                                 id="water-level-{{ device.device_id }}"
+                                 style="background: linear-gradient(to top, var(--primary-blue), var(--dark-blue));">
+                                <div class="tank-waves"></div>
                             </div>
-                            
-                            <!-- History View Tab -->
-                            <div class="tab-pane fade" id="history-{{ device.device_id }}" role="tabpanel" 
-                                 aria-labelledby="history-tab-{{ device.device_id }}">
-                                <div class="chart-container">
-                                    <canvas id="chart-{{ device.device_id }}"></canvas>
-                                </div>
-                                <button class="btn btn-sm btn-outline-primary w-100 mt-2 shadow-sm" 
-                                        onclick="loadHistory('{{ device.device_id }}')">
-                                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh History
-                                </button>
-                            </div>
-                            
-                            <!-- Schedule View Tab -->
-                            <div class="tab-pane fade" id="schedule-{{ device.device_id }}" role="tabpanel" 
-                                 aria-labelledby="schedule-tab-{{ device.device_id }}">
-                                <h5 class="card-title mb-3">
-                                    <i class="bi bi-clock me-2"></i>
-                                    Weekly Watering Schedule
-                                </h5>
-                                
-                                {% set days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
-                                {% set fertilizer_types = ['None', 'Type A', 'Type B', 'Type C', 'Organic Mix'] %}
-                                
-                                {% for day in days %}
-                                <div class="schedule-day">
-                                    <div class="schedule-header">
-                                        <span class="schedule-title">{{ day }}</span>
-                                        <div class="schedule-toggle form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="enable-{{ day|lower }}-{{ device.device_id }}" checked>
-                                            <label class="form-check-label" for="enable-{{ day|lower }}-{{ device.device_id }}">Enabled</label>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Morning Schedule -->
-                                    <div class="schedule-entry">
-                                        <div class="form-floating">
-                                            <input type="time" class="form-control" id="morning-time-{{ day|lower }}-{{ device.device_id }}" 
-                                                   value="08:00">
-                                            <label for="morning-time-{{ day|lower }}-{{ device.device_id }}">Time</label>
-                                        </div>
-                                        <div class="form-floating">
-                                            <input type="number" class="form-control" id="morning-amount-{{ day|lower }}-{{ device.device_id }}" 
-                                                   placeholder="Amount" value="500" min="0">
-                                            <label for="morning-amount-{{ day|lower }}-{{ device.device_id }}">Amount (liters)</label>
-                                        </div>
-                                        <div class="form-floating">
-                                            <input type="number" class="form-control" id="morning-duration-{{ day|lower }}-{{ device.device_id }}" 
-                                                   placeholder="Duration" value="15" min="1">
-                                            <label for="morning-duration-{{ day|lower }}-{{ device.device_id }}">Duration (min)</label>
-                                        </div>
-                                        <div class="form-floating">
-                                            <select class="form-select fertilizer-select" id="morning-fertilizer-{{ day|lower }}-{{ device.device_id }}">
-                                                {% for fert in fertilizer_types %}
-                                                <option value="{{ fert }}" {% if fert == 'None' %}selected{% endif %}>{{ fert }}</option>
-                                                {% endfor %}
-                                            </select>
-                                            <label for="morning-fertilizer-{{ day|lower }}-{{ device.device_id }}">Fertilizer</label>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Evening Schedule -->
-                                    <div class="schedule-entry">
-                                        <div class="form-floating">
-                                            <input type="time" class="form-control" id="evening-time-{{ day|lower }}-{{ device.device_id }}" 
-                                                   value="18:00">
-                                            <label for="evening-time-{{ day|lower }}-{{ device.device_id }}">Time</label>
-                                        </div>
-                                        <div class="form-floating">
-                                            <input type="number" class="form-control" id="evening-amount-{{ day|lower }}-{{ device.device_id }}" 
-                                                   placeholder="Amount" value="500" min="0">
-                                            <label for="evening-amount-{{ day|lower }}-{{ device.device_id }}">Amount (liters)</label>
-                                        </div>
-                                        <div class="form-floating">
-                                            <input type="number" class="form-control" id="evening-duration-{{ day|lower }}-{{ device.device_id }}" 
-                                                   placeholder="Duration" value="15" min="1">
-                                            <label for="evening-duration-{{ day|lower }}-{{ device.device_id }}">Duration (min)</label>
-                                        </div>
-                                        <div class="form-floating">
-                                            <select class="form-select fertilizer-select" id="evening-fertilizer-{{ day|lower }}-{{ device.device_id }}">
-                                                {% for fert in fertilizer_types %}
-                                                <option value="{{ fert }}" {% if fert == 'None' %}selected{% endif %}>{{ fert }}</option>
-                                                {% endfor %}
-                                            </select>
-                                            <label for="evening-fertilizer-{{ day|lower }}-{{ device.device_id }}">Fertilizer</label>
-                                        </div>
-                                    </div>
-                                    
-                                    <button class="btn btn-sm btn-outline-primary add-schedule-btn">
-                                        <i class="bi bi-plus-circle me-1"></i> Add Another Schedule
-                                    </button>
-                                </div>
-                                {% endfor %}
-                                
-                                <div class="d-grid gap-2 mt-3">
-                                    <button class="btn btn-primary">
-                                        <i class="bi bi-save me-1"></i> Save Schedule
-                                    </button>
-                                </div>
-                            </div>
+                            <div class="tank-percentage" id="tank-percentage-{{ device.device_id }}">0%</div>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <span class="tank-status" id="tank-status-{{ device.device_id }}">Loading...</span>
                         </div>
                     </div>
+
+                    <!-- Secondary Tank Level Section -->
+                    <div class="mb-4">
+                        <h5 class="card-title">
+                            <i class="bi bi-droplet-half" style="color: var(--primary-green);"></i>
+                            Secondary Tank Level
+                        </h5>
+                        <div class="tank-container position-relative">
+                            <div class="tank-label">SECONDARY TANK</div>
+                            <div class="water-level position-absolute bottom-0 w-100" 
+                                 id="secondary-water-level-{{ device.device_id }}"
+                                 style="background: linear-gradient(to top, var(--primary-green), var(--dark-green));">
+                                <div class="tank-waves"></div>
+                            </div>
+                            <div class="tank-percentage" id="secondary-tank-percentage-{{ device.device_id }}">0%</div>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <span class="tank-status" id="secondary-tank-status-{{ device.device_id }}">Loading...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- LED Control Section -->
+                    <div class="led-control-section">
+                        <h5 class="card-title">
+                            <i class="bi bi-lightbulb-fill" style="color: var(--primary-orange);"></i>
+                            LED Control
+                        </h5>
+                        <div class="btn-group w-100 shadow-sm" role="group">
+                            <button type="button" class="btn btn-led btn-led-on" 
+                                    onclick="controlLED('{{ device.device_id }}', true)">
+                                <i class="bi bi-power me-1"></i> Turn ON
+                            </button>
+                            <button type="button" class="btn btn-led btn-led-off" 
+                                    onclick="controlLED('{{ device.device_id }}', false)">
+                                <i class="bi bi-power-off me-1"></i> Turn OFF
+                            </button>
+                        </div>
+                        <div class="mt-3 text-center">
+                            <span class="me-2">Status:</span>
+                            <span class="led-indicator {% if device.led_state %}led-on{% else %}led-off{% endif %}" 
+                                  id="led-indicator-{{ device.device_id }}"></span>
+                            <span id="led-status-{{ device.device_id }}" class="fw-bold">
+                                {{ 'ON' if device.led_state else 'OFF' }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart Section -->
+                    <div class="mt-4">
+                        <h5 class="card-title">
+                            <i class="bi bi-graph-up" style="color: var(--primary-purple);"></i>
+                            Tank Level History
+                        </h5>
+                        <div class="chart-container">
+                            <canvas id="chart-{{ device.device_id }}"></canvas>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary w-100 mt-2 shadow-sm" 
+                                onclick="loadHistory('{{ device.device_id }}')">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Refresh History
+                        </button>
+                    </div>
                 </div>
             </div>
-            {% else %}
-            <div class="col-12">
-                <div class="alert alert-info shadow-sm">
-                    <i class="bi bi-info-circle-fill me-2"></i>
-                    You don't have any devices yet. Add your first device to get started!
-                </div>
-            </div>
-            {% endfor %}
         </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info shadow-sm">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                You don't have any devices yet. Add your first device to get started!
+            </div>
+        </div>
+        {% endfor %}
     </div>
 </div>
 
@@ -759,15 +458,15 @@
             // Update status text and color
             if (percentage > 0.8) {
                 waterLevel.style.background = 'linear-gradient(to top, var(--primary-blue), var(--dark-blue))';
-                tankStatus.textContent = 'Good';
+                tankStatus.textContent = 'Main Tank: Good';
                 tankStatus.className = 'tank-status status-good';
             } else if (percentage > 0.3) {
                 waterLevel.style.background = 'linear-gradient(to top,  var(--primary-blue), var(--dark-blue))';
-                tankStatus.textContent = 'Moderate';
+                tankStatus.textContent = 'Main Tank: Moderate';
                 tankStatus.className = 'tank-status status-moderate';
             } else {
                 waterLevel.style.background = 'linear-gradient(to top,  var(--primary-blue), var(--dark-blue))';
-                tankStatus.textContent = 'Low - Refill';
+                tankStatus.textContent = 'Main Tank: Low - Please Refill';
                 tankStatus.className = 'tank-status status-low';
             }
         }
@@ -787,15 +486,15 @@
             // Update status text and color
             if (percentage > 0.8) {
                 waterLevel.style.background = 'linear-gradient(to top, var(--primary-green), var(--dark-green))';
-                tankStatus.textContent = 'Good';
+                tankStatus.textContent = 'Secondary Tank: Good';
                 tankStatus.className = 'tank-status status-good';
             } else if (percentage > 0.3) {
                 waterLevel.style.background = 'linear-gradient(to top, var(--primary-green), var(--dark-green))';
-                tankStatus.textContent = 'Moderate';
+                tankStatus.textContent = 'Secondary Tank: Moderate';
                 tankStatus.className = 'tank-status status-moderate';
             } else {
                 waterLevel.style.background = 'linear-gradient(to top, var(--primary-green), var(--dark-green))';
-                tankStatus.textContent = 'Low - Refill';
+                tankStatus.textContent = 'Secondary Tank: Low - Please Refill';
                 tankStatus.className = 'tank-status status-low';
             }
         }
